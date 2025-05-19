@@ -48,6 +48,29 @@ type MatchCase<
 	R
 > = [Preds, ((...args: HandlerArgs<Preds, Args>) => R) | R]
 
+/**
+ * Creates a case for the `match` function.
+ *
+ * @description
+ * The `caseOf` function creates a case to be used with the `match` function.
+ * Each case consists of an array of predicates and a handler function or static value.
+ * The predicates determine if the case matches the input values, and the handler
+ * produces the result when the case matches.
+ *
+ * @example
+ * ```typescript
+ * caseOf([isString, isNumber], (str, num) => `${str} ${num}`)
+ * caseOf([5, "hello"], () => "Exact match")
+ * caseOf([{ id: isNumber }, _], (obj) => `Object with id: ${obj.id}`)
+ * ```
+ *
+ * @template Preds - A tuple type representing the predicate matchers.
+ * @template Args - A tuple type representing the arguments to match against.
+ * @template R - The return type of the handler.
+ * @param {Preds} predicates - An array of predicates to match against the input values.
+ * @param {((...args: HandlerArgs<Preds, Args>) => R) | R} handler - A function to call with the matched values, or a static value to return.
+ * @returns {MatchCase<Preds, Args, R>} A match case to be used with the `match` function.
+ */
 export function caseOf<
 	Preds extends [Matcher, ...Matcher[]],
 	Args extends readonly unknown[],
@@ -94,25 +117,92 @@ export const isPrimitive = (
 	!['object', 'function'].includes(typeof value)
 
 /**
- * Match takes a list of cases and returns a function that will match the input values against the cases.
- * For example like so
+ * Creates a pattern matching function that evaluates input values against a series of cases.
+ *
+ * @description
+ * The `match` function implements pattern matching in TypeScript, similar to functional languages.
+ * It takes a list of cases created with `caseOf` and returns a function that accepts arguments
+ * matching the specified `Args` type. When called, the returned function matches its arguments
+ * against predicates for each case, in order, and executes the handler for the first matching case.
+ *
+ * @example
  * ```typescript
- * match<[Arg1, Arg2], string>( // you must hint the input and return types
- *   caseOf([isArray, _], (arr, arg2) => 'Array'),
- *   caseOf([isObj, _], (obj, arg2) => 'Object'),
- *   caseOf([_, _], (arg1, arg2) => 'Default')
- * )(arg1, arg2)
- *  ```
- * Each case must be wrapped in a caseOf function, which takes an array of predicates (matching the arity of the 
- * input parameters) and a handler function.
- * The argument types of the handler function will be narrowed down if the predicates are type guards or 
- * partial objects.
- * * Predicates can be also primitive values, in which case the camparison will be done with strict equality.
- * * If the predicate is an object, the input object must contain all the properties of the predicate object.
- * * If the object properties are predicates, the input object properties must match the predicates.
- * * Tuples are matched element-wise.
- * If no match is found, an error is thrown.
- * @param cases a list of cases to match against
+ * // Basic matching with function predicates
+ * const getDescription = match<[unknown], string>(
+ *   caseOf([isString], str => `String: ${str}`),
+ *   caseOf([isNumber], num => `Number: ${num}`),
+ *   caseOf([isArray], arr => `Array with ${arr.length} items`),
+ *   caseOf([() => true], () => `Unknown type`)
+ * );
+ *
+ * getDescription("hello");   // "String: hello"
+ * getDescription(42);        // "Number: 42"
+ * getDescription([1,2,3]);   // "Array with 3 items"
+ * getDescription(new Date()); // "Unknown type"
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Type narrowing with type guards
+ * type Shape = Circle | Square | Rectangle;
+ *
+ * const getArea = match<[Shape], number>(
+ *   caseOf([isCircle], circle => Math.PI * circle.radius ** 2),
+ *   caseOf([isSquare], square => square.side ** 2),
+ *   caseOf([isRectangle], rect => rect.width * rect.height)
+ * );
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Multiple parameters with primitive matchers
+ * const calculator = match<[string, number, number], number>(
+ *   caseOf(["add", _, _], (_, a, b) => a + b),
+ *   caseOf(["subtract", _, _], (_, a, b) => a - b),
+ *   caseOf(["multiply", _, _], (_, a, b) => a * b),
+ *   caseOf(["divide", _, 0], () => { throw new Error("Division by zero"); }),
+ *   caseOf(["divide", _, _], (_, a, b) => a / b)
+ * );
+ *
+ * calculator("add", 5, 3);      // 8
+ * calculator("divide", 10, 2);  // 5
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Object destructuring and static returns
+ * const getGreeting = match<[{ type: string; name?: string }], string>(
+ *   caseOf([{ type: "user", name: isString }], ({ name }) => `Hello, ${name}!`),
+ *   caseOf([{ type: "admin" }], () => "Welcome, admin!"),
+ *   caseOf([{ type: "guest" }], "Welcome, guest!")
+ * );
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Tuple/array matching
+ * const describe = match<[[number, string]], string>(
+ *   caseOf([[isOdd, "admin"]], () => "Odd admin ID"),
+ *   caseOf([[isEven, "user"]], () => "Even user ID"),
+ *   caseOf([[_, _]], ([id, role]) => `${role} with ID ${id}`)
+ * );
+ * ```
+ *
+ * @example
+ * ```typescript
+ * // Async operations
+ * const fetchData = match<[string], Promise<Data>>(
+ *   caseOf(["users"], async () => await api.getUsers()),
+ *   caseOf(["products"], async () => await api.getProducts()),
+ *   caseOf([_], async (resource) => await api.getResource(resource))
+ * );
+ * ```
+ *
+ * @template Args - A tuple type representing the types of arguments that will be matched.
+ * @template R - The return type of the resulting function.
+ * @param {...MatchCase<readonly Matcher<Args[number]>[], Args, R>[]} cases - A list of cases created with `caseOf`.
+ * @returns {(...values: Args) => R} A function that takes arguments of type `Args` and returns a value of type `R`.
+ * @throws {Error} If no case matches the input values.
  */
 export function match<Args extends readonly unknown[], R>(
 	...cases: MatchCase<readonly Matcher<Args[number]>[], Args, R>[]
