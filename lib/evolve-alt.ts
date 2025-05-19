@@ -1,11 +1,6 @@
-import {
-	isArray,
-	isFunction,
-	isNotUndefined,
-	isPlainObj,
-	isUndefined
-} from 'ramda-adjunct'
+
 import { caseOf, match } from './match.ts'
+import { isArray, isFunction, isNotUndefined, isObject, isUndefined } from './utils.ts'
 
 const _ = () => true
 
@@ -56,10 +51,10 @@ export function evolveAlt(specs: any, source?: any): any {
 		return (obj: any) => evolveAlt(specs, obj)
 	} else {
 		const fork = match<[any, any], any>(
-			caseOf([isArray, isPlainObj], (prop: any[], spec: object) =>
+			caseOf([isArray, isObject], (prop: any[], spec: object) =>
 				prop.map(evolveAlt(spec))
 			),
-			caseOf([isPlainObj, isPlainObj], (obj: object, spec: object) =>
+			caseOf([isObject, isObject], (obj: object, spec: object) =>
 				evolveAlt(spec, obj)
 			),
 			caseOf([isNotUndefined, isFunction], (prop: any, fn: Function) =>

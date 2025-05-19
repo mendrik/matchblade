@@ -1,4 +1,4 @@
-import { isPromise } from 'ramda-adjunct'
+import { isPromise } from './utils.ts'
 
 export type Resolved<T> = {
 	[K in keyof T]: T[K] extends Promise<infer R> ? R : T[K]
@@ -14,9 +14,9 @@ export type Resolved<T> = {
  * }
  * const resolved = await awaitObj(obj) // Promise<{a: number, b: number}>
  * // resolved = { a: 1, b: 2 }
- * ``` 
- * @param obj 
- * @returns 
+ * ```
+ * @param obj
+ * @returns
  */
 export async function awaitObj<T extends Record<string, any>>(
 	obj: T

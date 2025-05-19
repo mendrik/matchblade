@@ -1,6 +1,5 @@
-import { T as _, map, mapObjIndexed } from 'ramda'
-import { isArray, isObj } from 'ramda-adjunct'
 import { caseOf, match } from './match.ts'
+import { _, isArray, isObject } from './utils.ts'
 
 type Values<O> = O extends Record<string, any>
 	? {
@@ -39,8 +38,12 @@ export function traverse(
 		return (obj: object, key?: string) => traverse(fn as any, obj, key)
 	} else {
 		return match<[any, string | undefined], any>(
-			caseOf([isArray, _], map(traverse(fn))),
-			caseOf([isObj, _], v => mapObjIndexed(traverse(fn), v)),
+			caseOf([isArray, _], arr => arr.map(el => traverse(fn, el))),
+			caseOf([isObject, _], o =>
+				Object.fromEntries(
+					Object.entries(o).map(([k, v]) => [k, traverse(fn, v, k)])
+				)
+			),
 			caseOf([_, _], fn)
 		)(obj, key)
 	}

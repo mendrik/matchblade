@@ -1,6 +1,6 @@
 {
 	"name": "matchblade",
-	"version": "0.0.4",
+	"version": "0.0.10",
 	"author": {
 		"name": "Andreas Herd",
 		"email": "mendrik76@gmail.com",
@@ -28,17 +28,18 @@
 	"private": false,
 	"type": "module",
 	"license": "Apache-2.0",
-	"main": "dist/matchblade.js",
-	"types": "dist/index.d.ts",
+	"main": "./dist/index.es.js",
+	"types": "./dist/index.d.ts",
 	"scripts": {
 		"dev": "vite",
-		"build": "tsc --p ./tsconfig.build.json && vite build",
+		"build": "tsc --p ./tsconfig.json && vite build",
 		"test": "vitest",
 		"preview": "vite preview",
 		"prepublishOnly": "npm run build"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
+		"@microsoft/api-extractor": "^7.52.8",
 		"@types/node": "22.15.19",
 		"@types/ramda": "0.30.2",
 		"ramda": "0.30.1",

@@ -1,16 +1,15 @@
-import { awaitObj } from './await-obj'
-import { evolveAlt } from './evolve-alt'
-import { failOn } from './guards'
-import { listToTree, type TreeOf } from './list-to-tree'
-import { mapBy } from './map-by'
-import { caseOf, match } from './match'
-import { pipeAsync } from './pipe-async'
-import { pipeTap } from './pipe-tap'
-import { traverse } from './traverse'
+import { awaitObj } from './await-obj.ts'
+import { evolveAlt } from './evolve-alt.ts'
+import { failOn } from './guards.ts'
+import { listToTree, type TreeOf } from './list-to-tree.ts'
+import { mapBy } from './map-by.ts'
+import { match } from './match.ts'
+import { pipeAsync } from './pipe-async.ts'
+import { pipeTap } from './pipe-tap.ts'
+import { traverse } from './traverse.ts'
 
 export {
 	awaitObj,
-	caseOf,
 	evolveAlt,
 	failOn,
 	listToTree,
