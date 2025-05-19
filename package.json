@@ -1,10 +1,34 @@
 {
 	"name": "matchblade",
-	"author": "Andreas Herd",
-	"private": true,
+	"author": {
+		"name": "Andreas Herd",
+		"email": "mendrik76@gmail.com",
+		"url": "https://github.com/mendrik/"
+	},
+	"homepage": "https://github.com/mendrik/matchblade",
+	"bugs": {
+		"url": "https://github.com/mendrik/matchblade/issues",
+		"email": "mendrik76@gmail.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/mendrik/matchblade.git"
+	},
+	"keywords": [
+		"pattern matching",
+		"list to tree",
+		"tapping pipe",
+		"async pipe",
+		"evolve",
+		"typesafe matcher",
+		"type narrowing matcher",
+		"toolbelt"
+	],
+	"private": false,
 	"version": "0.0.1",
 	"type": "module",
-	"main": "dist/index.js",
+	"license": "Apache-2.0",
+	"main": "dist/matchblade.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"dev": "vite",
