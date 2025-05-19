@@ -1,0 +1,67 @@
+{
+	"$schema": "https://biomejs.dev/schemas/1.9.2/schema.json",
+	"vcs": {
+		"enabled": false,
+		"clientKind": "git",
+		"useIgnoreFile": false
+	},
+	"files": {
+		"ignoreUnknown": false,
+		"ignore": [
+			"node_modules",
+			"**/gen/**/*",
+			"**/schema.ts",
+			"backend/tests/test-sdk.ts"
+		]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab"
+	},
+	"organizeImports": {
+		"enabled": true
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"complexity": {
+				"noForEach": "off",
+				"useArrowFunction": "error",
+				"noBannedTypes": "off"
+			},
+			"suspicious": {
+				"noExplicitAny": "off",
+				"noAssignInExpressions": "off",
+				"noPrototypeBuiltins": "off"
+			},
+			"correctness": {
+				"noUnusedImports": "error",
+				"noChildrenProp": "off",
+				"noUnsafeOptionalChaining": "off"
+			},
+			"performance": {
+				"noAccumulatingSpread": "off"
+			},
+			"style": {
+				"noUselessElse": "off",
+				"noNonNullAssertion": "off",
+				"useImportType": {
+					"fix": "safe",
+					"level": "error"
+				}
+			}
+		}
+	},
+	"javascript": {
+		"parser": {
+			"unsafeParameterDecoratorsEnabled": true
+		},
+		"formatter": {
+			"quoteStyle": "single",
+			"semicolons": "asNeeded",
+			"trailingCommas": "none",
+			"arrowParentheses": "asNeeded"
+		}
+	}
+}
