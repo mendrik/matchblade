@@ -1,6 +1,6 @@
 {
 	"name": "matchblade",
-	"version": "0.0.10",
+	"version": "0.1.0",
 	"author": {
 		"name": "Andreas Herd",
 		"email": "mendrik76@gmail.com",
@@ -30,6 +30,11 @@
 	"license": "Apache-2.0",
 	"main": "./dist/index.es.js",
 	"types": "./dist/index.d.ts",
+	"files": [
+		"dist",
+		"README.md",
+		"LICENSE"
+	],
 	"scripts": {
 		"dev": "vite",
 		"build": "tsc --p ./tsconfig.json && vite build",

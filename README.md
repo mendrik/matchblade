@@ -27,10 +27,42 @@ npm install matchblade
 
 ### `caseOf` & `match`
 
-Type-safe pattern matching supporting primitives, objects, tuples, and custom guards.
+Match takes a list of cases and returns a function that will match the input values against the cases.
 
-```ts
-import { caseOf, match } from 'matchblade';
+For example like so
+```typescript
+match<[Arg1, Arg2], string>( // you must hint the input and return types
+  caseOf([isArray, _], (arr, arg2) => 'Array'),
+  caseOf([isObj, _], (obj, arg2) => 'Object'),
+  caseOf([_, _], (arg1, arg2) => 'Default')
+)(arg1, arg2)
+
+match<[Arg1], string>(
+  caseOf([{ prop1: A }], obj => 'object'), // if Arg1 is a union type, obj is will have the Extract<Args, { props1: A}> type
+)(arg1)
+
+match<[number, number], string>(
+  caseOf([1,2], '1,2'), // you can also work with static objects if only value equality is checked
+)(arg1, arg2)
+
+match<[object], string>(
+  caseOf({ propA: matchX, propB: { nested: matchY } }, () => 'ok'), // nested matchers in objects
+)(arg1)
+```
+
+Each case must be wrapped in a caseOf function, which takes an array of predicates (matching the arity of the 
+input parameters) and a handler function.
+The argument types of the handler function will be narrowed down if the predicates are type guards or 
+partial objects.
+Predicates can be also primitive values, in which case the camparison will be done with strict equality.
+If the predicate is an object, the input object must contain all the properties of the predicate object.
+If the object properties are predicates, the input object properties must match the predicates.
+Tuples are matched element-wise.
+If no match is found, an error is thrown.
+You can use `_` to match anything (it's a function that always returns true)
+
+```typescript
+import { caseOf, match, _ } from 'matchblade';
 import { isObject } from 'ramda-adjunct';
 
 const handler = match<[any, any], string>(
@@ -49,6 +81,9 @@ console.log(handler('foo', 'bar')); // "Default: foo, bar"
 ### `evolveAlt`
 
 Recursively transform an object according to a spec. Maps nested arrays/objects automatically.
+Instead of doing evolve({ a: evolve({ b: map(evolve({ c: toUpperCase }))})} you can simply do
+evolveAlt({ a: { b: {c: toUpperCase } } }). If spec props are non existant in the source object
+the whole object is passed into the transforming function.
 
 ```ts
 import { evolveAlt } from 'matchblade';
@@ -62,7 +97,7 @@ const result = evolveAlt(spec, source);
 
 ### `awaitObj`
 
-Resolve all Promise values in an object while preserving keys.
+Resolve all _promised_ properties in an object while preserving keys. 
 
 ```ts
 import { awaitObj } from 'matchblade';
@@ -74,7 +109,14 @@ const resolved = await awaitObj(data);
 
 ### `listToTree`
 
-Convert a flat list with parent references into a nested tree.
+Convert a flat list with references via parent ids into a nested tree.
+
+Expects 3 property names:
+- where ids are defined
+- which property refers to parent ids
+- where should child nodes be stashed to
+
+and a flat list of node objects.
 
 ```ts
 import { listToTree } from 'matchblade';

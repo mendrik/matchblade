@@ -2,9 +2,9 @@ import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
 
 export default defineConfig({
-	plugins: [dts({ include: ['lib'] })],
+	plugins: [dts()],
 	build: {
-		target: 'esnext',
+		target: 'es6',
 		outDir: 'dist',
 		rollupOptions: {
 			treeshake: true
