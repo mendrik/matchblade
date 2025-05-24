@@ -73,7 +73,7 @@ describe('pattern', () => {
 		expect(matcher({ a: 2, c: 3 })).toBe('no match')
 	})
 
-	it('should match object matchers', () => {
+	it('should match object array matchers', () => {
 		const matcher = match<[object], string>(
 			caseOf([{ a: isEmpty }], () => 'match'),
 			caseOf([_], () => 'no match')
@@ -138,8 +138,14 @@ describe('pattern', () => {
 		const isCat = (a: Animal): a is Cat => isEven(a)
 		const isDog = (a: Animal): a is Dog => isOdd(a)
 		const matcher = match<[Animal], string>(
-			caseOf([isCat], c => 'cat'), // c: Cat
-			caseOf([isDog], d => 'dog') // d: Dog
+			caseOf([isCat], c => {
+				expectType<Cat>(c)
+				return 'cat'
+			}),
+			caseOf([isDog], d => {
+				expectType<Dog>(d)
+				return 'dog'
+			})
 		)
 		expect(matcher(2 as Animal)).toBe('cat')
 		expect(matcher(3 as Animal)).toBe('dog')
@@ -148,30 +154,36 @@ describe('pattern', () => {
 	it('should match the correct case with async generator', async () => {
 		const matcher = match<
 			[string | number | boolean, number],
-			AsyncGenerator<any, void>
+			AsyncGenerator<string, void, unknown>
 		>(
 			caseOf([isString, equals(42)], async function* (s1, n1) {
+				expectType<string>(s1)
+				expectType<number>(n1)
 				yield `string match ${s1} ${n1}`
 			}),
 			caseOf([isNumber, equals(10)], async function* (n1, n2) {
+				expectType<number>(n1)
+				expectType<number>(n2)
 				yield `number match ${n1} ${n2}`
 			}),
-			caseOf([isBoolean, _], async function* (b1, n2) {
-				yield `boolean match ${b1} ${n2}`
+			caseOf([isBoolean, _], async function* (b1, n1) {
+				expectType<boolean>(b1)
+				expectType<number>(n1)
+				yield `boolean match ${b1} ${n1}`
 			})
 		)
 
-		const result1 = []
+		const result1: string[] = []
 		for await (const res of matcher('hello', 42)) {
 			result1.push(res)
 		}
 		expect(result1).toEqual(['string match hello 42'])
 
-		const result2 = []
+		const result2: string[] = []
 		for await (const res of matcher(30, 10)) result2.push(res)
 		expect(result2).toEqual(['number match 30 10'])
 
-		const result3 = []
+		const result3: string[] = []
 		for await (const res of matcher(true, 25)) {
 			result3.push(res)
 		}
