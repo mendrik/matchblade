@@ -177,7 +177,7 @@ Deeply traverse an object/array, applying a function to each value (with optiona
 import { traverse } from 'matchblade';
 
 const data = { a: 1, b: { c: 2, d: [3,4] } };
-const doubled = traverse((val: number) => val * 2, data);
+const doubled = traverse((val: number, _key?: string) => val * 2, data);
 // doubled = { a: 2, b: { c: 4, d: [6,8] } }
 ```
 
