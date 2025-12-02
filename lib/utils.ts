@@ -1,3 +1,7 @@
+/**
+ * A wildcard matcher that always returns true.
+ * Used in pattern matching to match any value.
+ */
 export const _ = () => true
 
 export const isArray = Array.isArray.bind(Array)

@@ -48,6 +48,16 @@ type MatchCase<
 	R
 > = [Preds, ((...args: HandlerArgs<Preds, Args>) => R) | R]
 
+/**
+ * Creates a match case for the `match` function.
+ *
+ * @template Preds The types of the matchers.
+ * @template Args The types of the arguments to be matched.
+ * @template R The return type of the handler.
+ * @param predicates An array of matchers corresponding to the arguments.
+ * @param handler A function to execute if the matchers match, or a static value to return.
+ * @returns A tuple containing the predicates and the handler, used by `match`.
+ */
 export function caseOf<
 	Preds extends [Matcher, ...Matcher[]],
 	Args extends readonly unknown[],

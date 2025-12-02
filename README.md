@@ -3,7 +3,24 @@
 [![npm version](https://img.shields.io/npm/v/matchblade.svg)](https://www.npmjs.com/package/matchblade)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Matchblade is a TypeScript utility library offering a suite of functional programming helpers with full type safety. It includes pattern matching, async handling, data structure transformations, object traversal, and more.
+Matchblade is a robust TypeScript utility library designed to bring functional programming patterns and type safety to your daily workflow. It provides a suite of powerful tools for pattern matching, data transformation, and async control flow.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Why Matchblade?](#why-matchblade)
+- [Features](#features)
+- [API Reference](#api-reference)
+  - [Pattern Matching (`match` / `caseOf`)](#pattern-matching-match--caseof)
+  - [Object Evolution (`evolveAlt`)](#object-evolution-evolvealt)
+  - [Promise Resolution (`awaitObj`)](#promise-resolution-awaitobj)
+  - [Tree Conversion (`listToTree`)](#tree-conversion-listtotree)
+  - [Map Creation (`mapBy`)](#map-creation-mapby)
+  - [Async Piping (`pipeAsync`)](#async-piping-pipeasync)
+  - [Pipe Tapping (`pipeTap`)](#pipe-tapping-pipetap)
+  - [Deep Traversal (`traverse`)](#deep-traversal-traverse)
+  - [Guarded Failure (`failOn`)](#guarded-failure-failon)
+- [License](#license)
 
 ## Installation
 
@@ -11,186 +28,179 @@ Matchblade is a TypeScript utility library offering a suite of functional progra
 npm install matchblade
 ```
 
+## Why Matchblade?
+
+Matchblade bridges the gap between functional programming concepts and practical TypeScript development.
+- **Type Safety First**: Built with TypeScript in mind, ensuring your data transformations and pattern matching are fully typed.
+- **Functional Patterns**: Brings powerful concepts like pattern matching and piping to standard JavaScript/TypeScript.
+- **Utility Focused**: Solves common problems like deep object traversal, list-to-tree conversion, and async flows without the bloat of larger frameworks.
+
 ## Features
 
-- **Pattern matching** with type narrowing: `match` / `caseOf`
-- **Object evolution**: `evolveAlt`
-- **Promise resolution**: `awaitObj`
-- **List-to-tree conversion**: `listToTree`
-- **Mapping to Map**: `mapBy`
-- **Async piping**: `pipeAsync`
-- **Tapping pipe**: `pipeTap`
-- **Deep traversal**: `traverse`
-- **Guarded failure**: `failOn`
+- **Pattern Matching**: Expressive `match` and `caseOf` for handling complex conditions with type narrowing.
+- **Async Utilities**: `pipeAsync` and `awaitObj` for managing asynchronous operations cleanly.
+- **Data Structures**: Helpers for Trees, Maps, and deep object manipulation.
+- **Guards**: `failOn` for declarative validation.
 
 ## API Reference
 
-### `caseOf` & `match`
+### Pattern Matching (`match` / `caseOf`)
 
-Match takes a list of cases and returns a function that will match the input values against the cases.
-
-For example like so
-```typescript
-match<[Arg1, Arg2], string>( // you must hint the input and return types
-  caseOf([isArray, _], (arr, arg2) => 'Array'),
-  caseOf([isObj, _], (obj, arg2) => 'Object'),
-  caseOf([_, _], (arg1, arg2) => 'Default')
-)(arg1, arg2)
-
-match<[Arg1], string>(
-  caseOf([{ prop1: A }], obj => 'object'), // if Arg1 is a union type, obj is will have the Extract<Args, { props1: A}> type
-)(arg1)
-
-match<[number, number], string>(
-  caseOf([1,2], '1,2'), // you can also work with static objects if only value equality is checked
-)(arg1, arg2)
-
-match<[object], string>(
-  caseOf({ propA: matchX, propB: { nested: matchY } }, () => 'ok'), // nested matchers in objects
-)(arg1)
-```
-
-Each case must be wrapped in a caseOf function, which takes an array of predicates (matching the arity of the 
-input parameters) and a handler function.
-The argument types of the handler function will be narrowed down if the predicates are type guards or 
-partial objects.
-Predicates can be also primitive values, in which case the camparison will be done with strict equality.
-If the predicate is an object, the input object must contain all the properties of the predicate object.
-If the object properties are predicates, the input object properties must match the predicates.
-Tuples are matched element-wise.
-If no match is found, an error is thrown.
-You can use `_` to match anything (it's a function that always returns true)
+A powerful pattern matching utility that narrows types based on predicates.
 
 ```typescript
-import { caseOf, match, _ } from 'matchblade';
-import { isObject } from 'ramda-adjunct';
+import { match, caseOf, _ } from 'matchblade';
+// Assuming you have predicates like isArray, isObject available or defined
+const isArray = (x: any): x is any[] => Array.isArray(x);
+const isObject = (x: any): x is object => typeof x === 'object' && x !== null;
 
-const handler = match<[any, any], string>(
-  caseOf([Array.isArray, _], arr => `Array(${arr.length})`),
-  caseOf([isObject, _], obj => `Object(${Object.keys(obj).length})`),
-  caseOf([42, _], () => 'The answer!'),
+const handleInput = match<[any, any], string>(
+  caseOf([isArray, _], (arr, arg2) => `Array of length ${arr.length}`),
+  caseOf([isObject, _], (obj, arg2) => `Object with keys: ${Object.keys(obj)}`),
+  caseOf([42, _], () => 'The Ultimate Answer'),
   caseOf([_, _], (a, b) => `Default: ${a}, ${b}`)
 );
 
-console.log(handler([1, 2], 0)); // "Array(2)"
-console.log(handler({ x: 1 }, '')); // "Object(1)"
-console.log(handler(42, null));      // "The answer!"
-console.log(handler('foo', 'bar')); // "Default: foo, bar"
+console.log(handleInput([1, 2], 0)); // "Array of length 2"
+console.log(handleInput({ a: 1 }, 0)); // "Object with keys: a"
 ```
 
-### `evolveAlt`
+### Object Evolution (`evolveAlt`)
 
-Recursively transform an object according to a spec. Maps nested arrays/objects automatically.
-Instead of doing evolve({ a: evolve({ b: map(evolve({ c: toUpperCase }))})} you can simply do
-evolveAlt({ a: { b: {c: toUpperCase } } }). If spec props are non existant in the source object
-the whole object is passed into the transforming function.
+Recursively transform an object according to a spec. It automatically handles nested arrays and objects.
 
-```ts
+```typescript
 import { evolveAlt } from 'matchblade';
 
-const source = { a: 1, b: { c: 2 }, list: [{ v: 3 }] };
-const spec   = { a: (n: number) => n + 1, b: { c: (n: number) => n * 2 }, list: { v: (n: number) => n - 1 } };
+const source = {
+  user: { name: 'alice', score: 10 },
+  items: [{ id: 1, value: 5 }, { id: 2, value: 10 }]
+};
+
+const spec = {
+  user: { name: (s: string) => s.toUpperCase() },
+  items: { value: (n: number) => n * 2 }
+};
 
 const result = evolveAlt(spec, source);
-// result = { a: 2, b: { c: 4 }, list: [{ v: 2 }] }
+// result:
+// {
+//   user: { name: 'ALICE', score: 10 },
+//   items: [{ id: 1, value: 10 }, { id: 2, value: 20 }]
+// }
 ```
 
-### `awaitObj`
+### Promise Resolution (`awaitObj`)
 
-Resolve all _promised_ properties in an object while preserving keys. 
+Resolve all properties in an object that are Promises, returning a new object with resolved values.
 
-```ts
+```typescript
 import { awaitObj } from 'matchblade';
 
-const data = { x: Promise.resolve(1), y: 2 };
+const data = {
+  id: 1,
+  profile: Promise.resolve({ name: 'Bob' }),
+  stats: Promise.resolve([1, 2, 3])
+};
+
 const resolved = await awaitObj(data);
-// resolved = { x: 1, y: 2 }
+// resolved: { id: 1, profile: { name: 'Bob' }, stats: [1, 2, 3] }
 ```
 
-### `listToTree`
+### Tree Conversion (`listToTree`)
 
-Convert a flat list with references via parent ids into a nested tree.
+Convert a flat list of items with parent references into a nested tree structure.
 
-Expects 3 property names:
-- where ids are defined
-- which property refers to parent ids
-- where should child nodes be stashed to
-
-and a flat list of node objects.
-
-```ts
+```typescript
 import { listToTree } from 'matchblade';
 
-const items = [ { id: 1, parent: null }, { id: 2, parent: 1 }, { id: 3, parent: 1 } ];
-const tree = listToTree('id', 'parent', 'children')(items);
-// tree = { id: 1, parent: null, children: [ { id: 2, parent: 1, children: [] }, { id: 3, parent: 1, children: [] } ] }
+const items = [
+  { id: 1, parentId: null, name: 'Root' },
+  { id: 2, parentId: 1, name: 'Child 1' },
+  { id: 3, parentId: 1, name: 'Child 2' }
+];
+
+const toTree = listToTree('id', 'parentId', 'children');
+const tree = toTree(items);
+// tree: { id: 1, parentId: null, name: 'Root', children: [ ... ] }
 ```
 
-### `mapBy`
+### Map Creation (`mapBy`)
 
-Create a `Map` from an array using a key selector.
+Create a `Map` from an array using a selector function for the key.
 
-```ts
+```typescript
 import { mapBy } from 'matchblade';
 
-const users = [ { id: 1, name: 'A' }, { id: 2, name: 'B' } ];
-const byId = mapBy(u => u.id, users);
-// Map { 1 => { id: 1, name: 'A' }, 2 => { id: 2, name: 'B' } }
+const users = [{ id: 1, name: 'Alice' }, { id: 2, name: 'Bob' }];
+const usersMap = mapBy(u => u.id, users);
+
+// usersMap.get(1) -> { id: 1, name: 'Alice' }
 ```
 
-### `pipeAsync`
+### Async Piping (`pipeAsync`)
 
-Compose functions (sync or async) into a pipeline returning a Promise.
+Compose a series of functions (sync or async) into a single pipeline.
 
-```ts
+```typescript
 import { pipeAsync } from 'matchblade';
 
-const pipeline = pipeAsync(
-  (n: number) => n + 1,
-  async n => n * 2,
-  n => `Result: ${n}`
+const process = pipeAsync(
+  (x: number) => x + 1,
+  async (x: number) => x * 2,
+  (x: number) => `Result: ${x}`
 );
 
-await pipeline(5); // "Result: 12"
+const result = await process(5); // (5 + 1) * 2 = 12 -> "Result: 12"
 ```
 
-### `pipeTap`
+### Pipe Tapping (`pipeTap`)
 
-Similar to `pipeAsync`, but each function also receives the original input.
+Similar to `pipeAsync`, but allows "tapping" into the flow. Each function receives the original input as the first argument, and the result of the previous function as the second.
 
-```ts
+```typescript
 import { pipeTap } from 'matchblade';
 
-const fn1 = (id: number) => ({ id });
-const fn2 = (id: number, res: any) => ({ ...res, time: Date.now() });
+const logStep = (input: any, result: any) => {
+  console.log('Step result:', result);
+  return result;
+};
 
-const tapped = pipeTap(fn1, fn2);
-const result = tapped(3);
-// result = { id: 3, time: 161803398874 }
+const pipeline = pipeTap(
+  (x: number) => x * 2,
+  logStep,
+  (x: number, prev: number) => prev + 10
+);
+
+await pipeline(5);
 ```
 
-### `traverse`
+### Deep Traversal (`traverse`)
 
-Deeply traverse an object/array, applying a function to each value (with optional key).
+Deeply traverse an object or array, applying a transformation function to every value.
 
-```ts
+```typescript
 import { traverse } from 'matchblade';
 
-const data = { a: 1, b: { c: 2, d: [3,4] } };
-const doubled = traverse((val: number, _key?: string) => val * 2, data);
-// doubled = { a: 2, b: { c: 4, d: [6,8] } }
+const data = { a: 1, b: [2, 3] };
+const doubled = traverse((val: number) => val * 2, data);
+// doubled: { a: 2, b: [4, 6] }
 ```
 
-### `failOn`
+### Guarded Failure (`failOn`)
 
-Throw if a guard returns true; otherwise return the input.
+A utility to throw an error if a condition is met, otherwise return the value. Useful for asserting invariants in pipelines.
 
-```ts
+```typescript
 import { failOn } from 'matchblade';
 
-const notNull = failOn((x: string|null): x is null => x === null, 'Value is null');
-notNull('hello'); // returns 'hello'
-notNull(null);    // throws Error('Value is null')
+const ensureNotNull = failOn(
+  (x: any) => x === null || x === undefined,
+  'Value cannot be null'
+);
+
+ensureNotNull('ok'); // 'ok'
+ensureNotNull(null); // Throws Error: 'Value cannot be null'
 ```
 
 ## License

@@ -5,9 +5,13 @@ export type Resolved<T> = {
 }
 
 /**
- * awaitObj takes an object with values that may be promises and returns an promised object with the same keys
- * where the values are the resolved promises.
- * ```typescript
+ * Resolves all properties of an object that are Promises.
+ *
+ * This function takes an object where some values might be Promises. It waits for all
+ * these Promises to resolve and returns a new object with the same keys but with
+ * the resolved values.
+ * 
+ * * ```typescript
  * const obj = {
  * 	a: Promise.resolve(1)
  * 	b: 2
@@ -15,8 +19,10 @@ export type Resolved<T> = {
  * const resolved = await awaitObj(obj) // Promise<{a: number, b: number}>
  * // resolved = { a: 1, b: 2 }
  * ```
- * @param obj
- * @returns
+ * 
+ * @template T The type of the input object.
+ * @param obj The object containing potentially promised values.
+ * @returns A Promise that resolves to a new object with all values resolved.
  */
 export async function awaitObj<T extends Record<string, any>>(
 	obj: T
