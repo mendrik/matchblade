@@ -1,5 +1,5 @@
 import { awaitObj } from './await-obj.ts'
-import { evolveAlt } from './evolve-alt.ts'
+import { evolve } from './evolve.ts'
 import { failOn } from './guards.ts'
 import { listToTree, type TreeOf } from './list-to-tree.ts'
 import { mapBy } from './map-by.ts'
@@ -11,7 +11,7 @@ import { _ } from './utils.ts'
 
 export {
 	awaitObj,
-	evolveAlt,
+	evolve,
 	failOn,
 	listToTree,
 	mapBy,

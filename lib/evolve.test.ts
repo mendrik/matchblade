@@ -3,9 +3,9 @@ import { expectType } from 'tsd'
 // Import the necessary functions from Vitest
 import { describe, expect, it } from 'vitest'
 import { awaitObj } from './await-obj.ts'
-import { evolveAlt } from './evolve-alt.ts' // Adjust the import path accordingly
+import { evolve } from './evolve.ts' // Adjust the import path accordingly
 
-describe('evolveAlt', () => {
+describe('evolve', () => {
 	it('should transform existing properties correctly', () => {
 		const obj = { a: 2, b: 3 }
 		const transformations = {
@@ -13,7 +13,7 @@ describe('evolveAlt', () => {
 			b: (x: number) => x + 1,
 			c: (o: typeof obj) => o.a + o.b
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expectType<number>(result.a)
 		expectType<number>(result.b)
 		expect(result).toEqual({ a: 4, b: 4, c: 5 })
@@ -25,7 +25,7 @@ describe('evolveAlt', () => {
 			z: (o: typeof obj) => o.x + o.y,
 			x: inc(1)
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expect(result).toEqual({ x: 1, y: 2, z: 3 })
 	})
 
@@ -35,7 +35,7 @@ describe('evolveAlt', () => {
 			m: (x: number) => x - 1,
 			o: (o: typeof obj) => o.m * o.n
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expect(result).toEqual({ m: 4, n: 10, o: 50 })
 	})
 
@@ -47,7 +47,7 @@ describe('evolveAlt', () => {
 			arr: (a: number[]) => a.concat(3),
 			bool: (b: boolean) => !b
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expect(result).toEqual({
 			num: 25,
 			str: 'HELLO',
@@ -61,7 +61,7 @@ describe('evolveAlt', () => {
 		const transformations = {
 			nested: (n: { value: number }) => ({ value: n.value * 3 })
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expectType<number>(result.nested.value)
 		expect(result).toEqual({ nested: { value: 6 } })
 	})
@@ -69,7 +69,7 @@ describe('evolveAlt', () => {
 	it('should handle empty objects and transformations', () => {
 		const obj = {}
 		const transformations = {}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expect(result).toEqual({})
 	})
 
@@ -78,7 +78,7 @@ describe('evolveAlt', () => {
 		const transformations = {
 			a: (x: number) => x + 10
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expectType<number>(result.a)
 		expect(result).toEqual({ a: 11, b: 2, c: 3 })
 	})
@@ -89,7 +89,7 @@ describe('evolveAlt', () => {
 			a: (x: number) => x.toString(),
 			b: (s: string) => s.length
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expectType<string>(result.a)
 		expectType<number>(result.b)
 		expect(result).toEqual({ a: '1', b: 4 })
@@ -100,7 +100,7 @@ describe('evolveAlt', () => {
 		const transformations = {
 			a: (x: number) => x * 10
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expect(result).toEqual({ a: 50 })
 	})
 
@@ -111,7 +111,7 @@ describe('evolveAlt', () => {
 			str: (s: string) => s.length,
 			newProp: (o: typeof obj) => o.str + o.num
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expectType<string>(result.num)
 		expectType<number>(result.str)
 		expectType<string>(result.newProp)
@@ -123,7 +123,7 @@ describe('evolveAlt', () => {
 		const transformations = {
 			sum: (o: typeof obj) => o.a + o.b
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expect(result).toEqual({ a: 1, b: 2, sum: 3 })
 	})
 
@@ -133,7 +133,7 @@ describe('evolveAlt', () => {
 			a: () => undefined,
 			b: () => undefined
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expect(result).toEqual({ a: undefined, b: undefined })
 	})
 
@@ -142,7 +142,7 @@ describe('evolveAlt', () => {
 		const transformations = {
 			arr: map((x: number) => `${x * 2}`)
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expect(result).toEqual({ arr: ['2', '4', '6'] })
 	})
 
@@ -151,7 +151,7 @@ describe('evolveAlt', () => {
 		const transformations = {
 			arr: { a: (a: number) => `${a * 2}` }
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expectType<string>(result.arr[0].a)
 		expect(result).toEqual({ arr: [{ a: '2' }, { a: '4' }, { a: '6' }] })
 	})
@@ -161,7 +161,7 @@ describe('evolveAlt', () => {
 		const transformations = {
 			a: (a: { b: { c: number } }) => ({ b: { c: a.b.c + 1 } })
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expect(result).toEqual({ a: { b: { c: 2 } } })
 	})
 
@@ -172,7 +172,7 @@ describe('evolveAlt', () => {
 			b: always(3),
 			c: pipe(prop('a'), inc)
 		}
-		const result = evolveAlt(transformations, obj)
+		const result = evolve(transformations, obj)
 		expectType<number>(result.a)
 		expectType<number>(result.b)
 		expectType<number>(result.c)
@@ -182,7 +182,7 @@ describe('evolveAlt', () => {
 
 	it('works in combination with resolve', async () => {
 		const init = () => Promise.resolve(1)
-		const evolver = evolveAlt({
+		const evolver = evolve({
 			lastProjectId: pipe(
 				prop('last_project_id'),
 				when<number, Promise<number>>(isNil, init)

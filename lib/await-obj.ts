@@ -5,24 +5,59 @@ export type Resolved<T> = {
 }
 
 /**
- * Resolves all properties of an object that are Promises.
+ * Resolves all `Promise` values within an object.
  *
- * This function takes an object where some values might be Promises. It waits for all
- * these Promises to resolve and returns a new object with the same keys but with
- * the resolved values.
- * 
- * * ```typescript
- * const obj = {
- * 	a: Promise.resolve(1)
- * 	b: 2
+ * This function takes an object where some properties are `Promise`s and returns a
+ * new `Promise` that resolves to an object with the same keys, but with all `Promise`s
+ * replaced by their resolved values. Non-`Promise` values are passed through unchanged.
+ *
+ * If any of the `Promise`s in the object reject, the `Promise` returned by `awaitObj`
+ * will also reject.
+ *
+ * @template T - The type of the input object, which can have `Promise`s as values.
+ * @param {T} obj - The object containing properties that may be `Promise`s.
+ * @returns {Promise<Resolved<T>>} A `Promise` that resolves to a new object where all
+ *   `Promise`s have been resolved to their values.
+ *
+ * @example
+ * import { awaitObj } from './await-obj';
+ *
+ * // --- Basic usage ---
+ * const data = {
+ *   user: Promise.resolve({ id: 1, name: 'Alice' }),
+ *   posts: Promise.resolve(['Post 1', 'Post 2']),
+ *   version: 2,
+ * };
+ *
+ * const resolvedData = await awaitObj(data);
+ * // resolvedData will be:
+ * // {
+ * //   user: { id: 1, name: 'Alice' },
+ * //   posts: ['Post 1', 'Post 2'],
+ * //   version: 2,
+ * // }
+ *
+ * // --- With mixed values ---
+ * const mixed = {
+ *   a: Promise.resolve(1),
+ *   b: 2,
+ *   c: 'hello',
+ * };
+ *
+ * const resolvedMixed = await awaitObj(mixed);
+ * console.log(resolvedMixed); // { a: 1, b: 2, c: 'hello' }
+ *
+ * // --- Handling rejection ---
+ * const failing = {
+ *   a: Promise.resolve(1),
+ *   b: Promise.reject(new Error('Something went wrong')),
+ * };
+ *
+ * try {
+ *   await awaitObj(failing);
+ * } catch (error) {
+ *   console.error(error.message); // "Something went wrong"
  * }
- * const resolved = await awaitObj(obj) // Promise<{a: number, b: number}>
- * // resolved = { a: 1, b: 2 }
- * ```
- * 
- * @template T The type of the input object.
- * @param obj The object containing potentially promised values.
- * @returns A Promise that resolves to a new object with all values resolved.
  */
 export async function awaitObj<T extends Record<string, any>>(
 	obj: T

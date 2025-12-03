@@ -52,11 +52,49 @@ export function pipeAsync<A, B, C, D, E, F, G, H>(
 ): (input: A) => Promise<Awaited<H>>
 
 /**
- * pipeAsync takes a list of functions and chains the output of each function to the input of the next function.
- * The first function in the list should take a single argument, and the rest should take the output of the previous
- * function. Async functions are supported, and the result of the last function in the chain is returned.
- * @param fns a list of functions to chain
- * @returns the result of the last function in the chain
+ * Creates an asynchronous pipeline of functions.
+ *
+ * `pipeAsync` chains a series of functions, where the output of each function is passed
+ * as the input to the next. It seamlessly handles both synchronous and asynchronous
+- * functions, ensuring that `Promise`s are resolved before being passed to the next
++ * functions, ensuring that `Promise`s are resolved before being passed to the next.
+ * step in the pipeline.
+ *
+ * The result is a new function that takes the initial input and returns a `Promise`
+ * resolving to the value of the final function in the chain.
+ *
+ * @param {...AsyncFn<any, any>[]} fns - A sequence of up to 7 functions to be chained.
+ *   Each function can be synchronous or asynchronous.
+ * @returns {(input: any) => Promise<any>} A new function that executes the pipeline.
+ *
+ * @example
+ * import { pipeAsync } from './pipe-async';
+ *
+ * // --- Example with mixed sync and async functions ---
+ * const addOne = (n: number) => n + 1;
+ * const doubleAsync = async (n: number) => {
+ *   await new Promise(res => setTimeout(res, 10));
+ *   return n * 2;
+ * };
+ * const toString = (n: number) => `Result: ${n}`;
+ *
+ * const calculation = pipeAsync(
+ *   addOne,      // 5 -> 6
+ *   doubleAsync, // 6 -> 12 (after a delay)
+ *   toString     // 12 -> "Result: 12"
+ * );
+ *
+ * const result = await calculation(5);
+ * console.log(result); // "Result: 12"
+ *
+ * // --- Type safety ---
+ * // The following would cause a TypeScript error because the output of `addOne` (number)
+ * // does not match the input of `toUpperCase` (string).
+ *
+ * // const invalidPipe = pipeAsync(
+ * //   addOne,
+ * //   (s: string) => s.toUpperCase()
+ * // );
  */
 export function pipeAsync(
 	...fns: Array<(arg: any) => any>

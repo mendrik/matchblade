@@ -178,10 +178,60 @@ export function pipeTap<
 	: ReturnType<F7>
 
 /**
- * PipeTap is a function that calls a series of functions with the initial argument and the result 
- * of the previous function. Functions can be async and the results will be automatically awaited.
- * @param ...fn1 a series of up to 7 functions
- * @returns the result of the last function in the series
+ * Creates a pipeline of functions where each function receives the initial argument
+ * and the result of the previous function.
+ *
+ * `pipeTap` is useful for creating a sequence of operations that depend on a shared
+ * initial state and the outcome of the preceding step. It supports both synchronous
+ * and asynchronous functions, automatically handling `Promise` resolution.
+ *
+ * @param {...Function} fns - A sequence of up to 8 functions.
+ *   - The first function receives the initial argument and `undefined`.
+ *   - Each subsequent function receives the initial argument and the result of the
+ *     previous function.
+ * @returns {Function} A new function that, when called, executes the pipeline and
+ *   returns the result of the last function. If any function in the pipe is async,
+ *   the returned function will also be async and return a `Promise`.
+ *
+ * @example
+ * import { pipeTap } from './pipe-tap';
+ *
+ * // --- Synchronous Example ---
+ * const add = (x: number, y: number = 0) => x + y;
+ * const multiplyBy = (multiplier: number) => (x: number, y: number) => x * y * multiplier;
+ *
+ * const calculation = pipeTap(
+ *   (initial: number) => initial + 1, // Start with 10 -> 11
+ *   (initial, prev) => add(initial, prev), // 10 + 11 = 21
+ *   (initial, prev) => multiplyBy(2)(initial, prev) // 10 * 21 * 2 = 420 (incorrect, see note)
+ *   // Note: The `initial` argument is passed to each function, which might not be what you want.
+ *   // The second argument to multiplyBy should be `prev`.
+ * );
+ *
+ * // Corrected synchronous example
+ * const calculationCorrect = pipeTap(
+ *   (initial: number) => initial + 1, // 10 -> 11
+ *   (_, prev) => prev + 10, // 11 + 10 = 21
+ *   (_, prev) => prev * 2 // 21 * 2 = 42
+ * );
+ *
+ * const resultSync = calculationCorrect(10);
+ * console.log(resultSync); // 42
+ *
+ * // --- Asynchronous Example ---
+ * const asyncAdd = async (x: number, y: number = 0) => {
+ *   await new Promise(res => setTimeout(res, 10));
+ *   return x + y;
+ * };
+ *
+ * const asyncCalculation = pipeTap(
+ *   (initial: number) => asyncAdd(initial, 1), // 10 + 1 = 11
+ *   (_, prev) => asyncAdd(prev, 10), // 11 + 10 = 21
+ *   (_, prev) => prev * 2 // 21 * 2 = 42
+ * );
+ *
+ * const resultAsync = await asyncCalculation(10);
+ * console.log(resultAsync); // 42
  */
 export function pipeTap<F extends Array<PF>>(
 	fn1: F[0],

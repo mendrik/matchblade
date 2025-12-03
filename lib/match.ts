@@ -50,13 +50,26 @@ type MatchCase<
 
 /**
  * Creates a match case for the `match` function.
+ * This function is a wrapper that allows `match` to infer types correctly.
  *
- * @template Preds The types of the matchers.
- * @template Args The types of the arguments to be matched.
- * @template R The return type of the handler.
- * @param predicates An array of matchers corresponding to the arguments.
- * @param handler A function to execute if the matchers match, or a static value to return.
- * @returns A tuple containing the predicates and the handler, used by `match`.
+ * @template Preds - An array of matchers.
+ * @template Args - The types of the arguments to be matched.
+ * @template R - The return type of the handler.
+ * @param {Preds} predicates - An array of predicates to match against the input arguments.
+ *   These can be primitive values, functions, or objects.
+ * @param {((...args: HandlerArgs<Preds, Args>) => R) | R} handler - The function to
+ *   execute or value to return if the predicates match. The handler's arguments are
+ *   type-narrowed based on the predicates.
+ * @returns {MatchCase<Preds, Args, R>} A tuple containing the predicates and the handler,
+ *   which is used by the `match` function.
+ *
+ * @example
+ * // Match against a string and a number
+ * const myCase = caseOf(['hello', 42], (str, num) => `${str}, ${num}`);
+ *
+ * // Match using a type guard
+ * const isString = (x: any): x is string => typeof x === 'string';
+ * const stringCase = caseOf([isString], (s) => `It's a string: ${s}`);
  */
 export function caseOf<
 	Preds extends [Matcher, ...Matcher[]],
@@ -98,31 +111,65 @@ const isTuple = (value: any): value is [any, any] =>
 
 const isFunction = (fn: any): fn is Function => typeof fn === 'function'
 
+/**
+ * Checks if a value is a primitive type.
+ * Primitives are considered to be strings, numbers, booleans, null, and undefined.
+ *
+ * @param value - The value to check.
+ * @returns {boolean} `true` if the value is a primitive, otherwise `false`.
+ *
+ * @example
+ * isPrimitive(42); // true
+ * isPrimitive("hello"); // true
+ * isPrimitive({}); // false
+ * isPrimitive([]); // false
+ */
 export const isPrimitive = (
 	value: any
 ): value is Exclude<any, object | Array<any>> =>
 	!['object', 'function'].includes(typeof value)
 
 /**
- * Match takes a list of cases and returns a function that will match the input values against the cases.
- * For example like so
- * ```typescript
- * match<[Arg1, Arg2], string>( // you must hint the input and return types
- *   caseOf([isArray, _], (arr, arg2) => 'Array'),
- *   caseOf([isObj, _], (obj, arg2) => 'Object'),
- *   caseOf([_, _], (arg1, arg2) => 'Default')
- * )(arg1, arg2)
- *  ```
- * Each case must be wrapped in a caseOf function, which takes an array of predicates (matching the arity of the 
- * input parameters) and a handler function.
- * The argument types of the handler function will be narrowed down if the predicates are type guards or 
- * partial objects.
- * * Predicates can be also primitive values, in which case the camparison will be done with strict equality.
- * * If the predicate is an object, the input object must contain all the properties of the predicate object.
- * * If the object properties are predicates, the input object properties must match the predicates.
- * * Tuples are matched element-wise.
- * If no match is found, an error is thrown.
- * @param cases a list of cases to match against
+ * A powerful pattern matching utility for TypeScript.
+ *
+ * `match` takes a series of `caseOf` clauses and returns a function that, when called
+ * with arguments, will execute the handler of the first matching case.
+ *
+ * The returned function is variadic, accepting the same number of arguments as there
+ * are predicates in each `caseOf`.
+ *
+ * @template Args - A tuple of the types of the arguments to be matched.
+ * @template R - The return type of the `match` function.
+ * @param {...MatchCase<readonly Matcher<Args[number]>[], Args, R>[]} cases - A series of
+ *   `caseOf` clauses to match against.
+ * @returns {(...values: Args) => R} A function that takes arguments and returns the
+ *   result of the first matching case's handler.
+ * @throws {Error} If no case matches the provided arguments.
+ *
+ * @example
+ * import { match, caseOf } from './match';
+ * import { is, _ } from 'ramda';
+ *
+ * // Define type guards
+ * const isString = (x: any): x is string => typeof x === 'string';
+ * const isNumber = (x: any): x is number => typeof x === 'number';
+ *
+ * // Create a matcher
+ * const myMatcher = match<[string | number, any], string>(
+ *   caseOf([isString, _], (str) => `The string is: ${str}`),
+ *   caseOf([isNumber, 10], (num) => `The number is 10, and the first arg was ${num}`),
+ *   caseOf([isNumber, _], (num) => `It's a number: ${num}`),
+ *   caseOf([{ a: 1 }], (obj) => `It's an object with a=1: ${JSON.stringify(obj)}`)
+ * );
+ *
+ * // Use the matcher
+ * console.log(myMatcher("hello", 5)); // "The string is: hello"
+ * console.log(myMatcher(42, 10)); // "The number is 10, and the first arg was 42"
+ * console.log(myMatcher(100, "world")); // "It's a number: 100"
+ * console.log(myMatcher({ a: 1, b: 2 }, 0)); // "It's an object with a=1: ..."
+ *
+ * // This will throw an error because no case matches
+ * // myMatcher(true, false);
  */
 export function match<Args extends readonly unknown[], R>(
 	...cases: MatchCase<readonly Matcher<Args[number]>[], Args, R>[]
