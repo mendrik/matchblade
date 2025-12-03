@@ -23,11 +23,18 @@ export function traverse<
 >(fn: (el: Values<O>, key?: string) => Values<R>, obj: O, key?: string): R
 
 /**
- * Can be used to traverse an object and apply a function to each value. Descends into arrays and objects.
- * @param fn
- * @param obj
- * @param key
- * @returns
+ * Recursively traverses an object or array, applying a function to each value.
+ *
+ * - If the value is an array, traverses each element.
+ * - If the value is an object, traverses each property.
+ * - If the value is a primitive, applies the function directly.
+ * - The function `fn` receives the value and its key (if available).
+ * - You can filter or transform values based on the key by checking the `key` argument in `fn`.
+ *
+ * @param fn Function to apply to each value. Receives (value, key).
+ * @param obj Object or array to traverse.
+ * @param key (Optional) Key of the current value.
+ * @returns A new object or array with the function applied to each value.
  */
 export function traverse(
 	fn: (value: any, key?: string) => any,

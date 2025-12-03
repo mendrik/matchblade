@@ -177,14 +177,60 @@ await pipeline(5);
 
 ### Deep Traversal (`traverse`)
 
-Deeply traverse an object or array, applying a transformation function to every value.
+Recursively traverses an object or array, applying a function to each value.
+
+- If the value is an array, traverses each element.
+- If the value is an object, traverses each property.
+- If the value is a primitive, applies the function directly.
+- The function `fn` receives the value and its key (if available).
+- You can filter or transform values based on the key by checking the `key` argument in `fn`.
+
+`traverse` can be used in a curried form, which is useful for creating reusable traversal functions.
 
 ```typescript
-import { traverse } from 'matchblade';
+import { traverse, match, caseOf, _ } from 'matchblade';
 
-const data = { a: 1, b: [2, 3] };
-const doubled = traverse((val: number) => val * 2, data);
-// doubled: { a: 2, b: [4, 6] }
+const data = {
+  a: 1,
+  b: [2, 3],
+  c: {
+    d: 'hello',
+    e: { f: 4 }
+  }
+};
+
+// Example 1: Double all numbers
+const double = (val: any) => typeof val === 'number' ? val * 2 : val;
+const doubled = traverse(double, data);
+// doubled: { a: 2, b: [4, 6], c: { d: 'hello', e: { f: 8 } } }
+
+// Example 2: Uppercase all string values with key 'd'
+const upperCaseD = (val: any, key?: string) =>
+  key === 'd' && typeof val === 'string' ? val.toUpperCase() : val;
+const upperCased = traverse(upperCaseD, data);
+// upperCased: { a: 1, b: [2, 3], c: { d: 'HELLO', e: { f: 4 } } }
+
+// Example 3: Curried Usage
+const doubler = traverse((value: number) => value * 2);
+const obj = { a: 1, b: 2, c: 3 };
+const curriedResult = doubler(obj);
+// curriedResult: { a: 2, b: 4, c: 6 }
+
+// Example 4: Conditional Traversal with `match`
+const isArray = (x: any): x is any[] => Array.isArray(x);
+const isNumber = (x: any): x is number => typeof x === 'number';
+
+const transform = traverse(
+  match<[any, string | undefined], any>(
+    caseOf([isArray, _], arr => arr.map(x => x * 3)),
+    caseOf([isNumber, _], num => num * 2),
+    caseOf([_, _], val => val) // Keep other types as they are
+  )
+);
+
+const conditionalData = { a: 1, b: [2, 3, 4] };
+const conditionalResult = transform(conditionalData);
+// conditionalResult: { a: 2, b: [6, 9, 12] }
 ```
 
 ### Guarded Failure (`failOn`)
