@@ -1,7 +1,7 @@
 import { isPromise } from './utils.ts'
 
 export type Resolved<T> = {
-	[K in keyof T]: T[K] extends Promise<infer R> ? R : T[K]
+	[K in keyof T]: T[K] extends PromiseLike<infer R> ? R : T[K]
 }
 
 /**

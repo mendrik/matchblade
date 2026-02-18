@@ -65,7 +65,7 @@ describe('pipeTap', () => {
 	})
 
 	it('should pass all arguments correctly to each function in the pipe', async () => {
-		const res = await pipeTap(promiseAdd3, add2)(3)
+		await pipeTap(promiseAdd3, add2)(3)
 
 		expect(promiseAdd3).toHaveBeenCalledWith(3, undefined)
 		expect(add2).toHaveBeenCalledWith(3, 6)
@@ -133,22 +133,22 @@ describe('pipeTap', () => {
 	})
 
 	it('should pass on results', async () => {
-		const fn = (a: number, b: number): number => b + 1
+		const fn = (_a: number, b: number): number => b + 1
 		const pipe = pipeTap(x => x, fn, fn, fn)
 		const result = pipe(3)
 		expect(result).toBe(6)
 	})
 
 	it('should pass on results asynch', async () => {
-		const fn = async (a: number, b: number): Promise<number> => b + 1
+		const fn = async (_a: number, b: number): Promise<number> => b + 1
 		const pipe = pipeTap(x => x, fn, fn, fn)
 		const result = await pipe(3)
 		expect(result).toBe(6)
 	})
 
 	it('should pass on results hybrid', async () => {
-		const fn = async (a: number, b: number): Promise<number> => b + 1
-		const fns = (a: number, b: number): number => b + 1
+		const fn = async (_a: number, b: number): Promise<number> => b + 1
+		const fns = (_a: number, b: number): number => b + 1
 		const pipe = pipeTap(x => x, fn, fns, fns)
 		const result = await pipe(3)
 		expect(result).toBe(6)

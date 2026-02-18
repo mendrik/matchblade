@@ -1,11 +1,9 @@
-type Param<T extends (a: any, r: any) => any> = T extends (a: infer P) => any
-	? P
-	: never
+type Param<T extends (a: any, r: any) => any> = Parameters<T>[0]
 
 type PF = (args: any, r: any) => any
 type PP<F extends PF> = (arg: Param<F>, r: Awaited<ReturnType<F>>) => any
 type HasPromise<T extends any[]> = T extends [infer First, ...infer Rest]
-	? First extends Promise<any>
+	? First extends PromiseLike<any>
 		? 1
 		: HasPromise<Rest>
 	: 0
@@ -243,12 +241,18 @@ export function pipeTap<F extends Array<PF>>(
 	fn7?: F[6]
 ): any {
 	const functions = [fn2, fn3, fn4, fn5, fn6, fn7].filter(Boolean) as Array<PF>
+	const isPromiseLike = (value: unknown): value is PromiseLike<unknown> =>
+		(value !== null && typeof value === 'object') || typeof value === 'function'
+			? typeof (value as PromiseLike<unknown>).then === 'function'
+			: false
 
 	return (arg: any) =>
 		functions.reduce(
 			(result, currentFn) =>
-				result instanceof Promise
-					? result.then(resolvedResult => currentFn(arg, resolvedResult))
+				isPromiseLike(result)
+					? Promise.resolve(result).then(resolvedResult =>
+							currentFn(arg, resolvedResult)
+						)
 					: currentFn(arg, result),
 			fn1(arg, undefined)
 		) // Initialize with the result of the first function

@@ -19,4 +19,28 @@ describe('listToTree', () => {
 			]
 		})
 	})
+
+	it('does not treat 0 as a missing parent', () => {
+		const nodes = [
+			{ id: 2, name: 'Orphan', parent_id: 0 },
+			{ id: 1, name: 'Root', parent_id: null },
+			{ id: 3, name: 'Child', parent_id: 1 }
+		]
+
+		const toTree = listToTree('id', 'parent_id', 'children')
+		expect(toTree(nodes)).toEqual({
+			...nodes[1],
+			children: [{ ...nodes[2], children: [] }]
+		})
+	})
+
+	it('throws when no root node exists', () => {
+		const nodes = [
+			{ id: 1, name: 'No root', parent_id: 2 },
+			{ id: 2, name: 'Still no root', parent_id: 1 }
+		]
+
+		const toTree = listToTree('id', 'parent_id', 'children')
+		expect(() => toTree(nodes)).toThrow(/no root/i)
+	})
 })

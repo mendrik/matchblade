@@ -43,7 +43,9 @@ You can mix primitive values and predicate functions.
 
 ```typescript
 import { match, caseOf, _ } from 'matchblade';
-import { isString, isNumber } from 'ramda-adjunct'; // or your own guards
+
+const isString = (x: unknown): x is string => typeof x === 'string';
+const isNumber = (x: unknown): x is number => typeof x === 'number';
 
 const processValue = match<[any], string>(
   caseOf([isString], (str) => `String: ${str.toUpperCase()}`),
@@ -104,15 +106,15 @@ const objMatcher = match<[any], string>(
 
 console.log(objMatcher({ a: 1, c: 3 })); // "Object with a=1"
 
-// Match array structure
-const arrayMatcher = match<[number[]], string>(
+// Match 2-tuple structure
+const arrayMatcher = match<[[number, number]], string>(
   caseOf([[1, 2]], () => 'Array [1, 2]'),
-  caseOf([[_, 2]], () => 'Array ending with 2'),
+  caseOf([[_, 2]], () => '2-tuple ending with 2'),
   caseOf([_], () => 'Other array')
 );
 
 console.log(arrayMatcher([1, 2])); // "Array [1, 2]"
-console.log(arrayMatcher([5, 2])); // "Array ending with 2"
+console.log(arrayMatcher([5, 2])); // "2-tuple ending with 2"
 ```
 
 ### Async Generators
@@ -219,6 +221,10 @@ const tree = toTree(list);
 //   ]
 // }
 ```
+
+Notes:
+- Root nodes are those with `parentId` set to `null` or `undefined` (not falsy values like `0`).
+- `listToTree(...)` throws if it can’t find any root node.
 
 ## Utility: mapBy
 

@@ -1,6 +1,4 @@
-type Awaited<T> = T extends PromiseLike<infer U> ? U : T
-
-type AsyncFn<I, O> = (input: I) => O | Promise<O>
+type AsyncFn<I, O> = (input: I) => O | PromiseLike<O>
 
 export function pipeAsync<A, B>(
 	fn1: AsyncFn<A, B>
@@ -56,8 +54,7 @@ export function pipeAsync<A, B, C, D, E, F, G, H>(
  *
  * `pipeAsync` chains a series of functions, where the output of each function is passed
  * as the input to the next. It seamlessly handles both synchronous and asynchronous
-- * functions, ensuring that `Promise`s are resolved before being passed to the next
-+ * functions, ensuring that `Promise`s are resolved before being passed to the next.
+ * functions, ensuring that `Promise`s are resolved before being passed to the next
  * step in the pipeline.
  *
  * The result is a new function that takes the initial input and returns a `Promise`

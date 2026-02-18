@@ -1,26 +1,20 @@
 import { caseOf, match } from './match.ts'
 import { _, isArray, isObject } from './utils.ts'
 
-type Values<O> = O extends Record<string, any>
-	? {
-			[K in keyof O]: O[K] extends (infer U)[]
-				? U extends Record<string, any>
-					? Values<U> // If it's an array of objects, recurse into the object type
-					: U[] // If it's an array of primitives, add the primitive array type
-				: O[K] extends Record<string, any>
-					? Values<O[K]> // If it's a nested object, recurse
-					: O[K] // Otherwise, add the primitive type
-		}[keyof O]
-	: never
+type TraverseResult<T, Leaf> = T extends readonly (infer U)[]
+	? TraverseResult<U, Leaf>[]
+	: T extends Record<string, any>
+		? { [K in keyof T]: TraverseResult<T[K], Leaf> }
+		: Leaf
 
-export function traverse<
-	O extends Record<string, any>,
-	R extends Record<keyof O, any>
->(fn: (el: Values<O>, key?: string) => Values<R>): (obj: O, key?: string) => R
-export function traverse<
-	O extends Record<string, any>,
-	R extends Record<keyof O, any>
->(fn: (el: Values<O>, key?: string) => Values<R>, obj: O, key?: string): R
+export function traverse<Leaf>(
+	fn: (el: any, key?: string) => Leaf
+): <O>(obj: O, key?: string) => TraverseResult<O, Leaf>
+export function traverse<O, Leaf>(
+	fn: (el: any, key?: string) => Leaf,
+	obj: O,
+	key?: string
+): TraverseResult<O, Leaf>
 
 /**
  * Recursively traverses a nested data structure (object or array) and applies a

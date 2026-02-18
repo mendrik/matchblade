@@ -93,7 +93,7 @@ describe('pipeAsync', () => {
 
 		// For testing purposes, we can assert the expected type error using @ts-expect-error
 		// @ts-expect-error
-		const piped = pipeAsync(fn1, fn2, fn3)
+		const _piped = pipeAsync(fn1, fn2, fn3)
 
 		// Since we cannot execute code that doesn't compile, we don't run this function.
 	})

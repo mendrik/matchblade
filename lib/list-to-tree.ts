@@ -10,8 +10,10 @@ export type TreeOf<T, C extends string> = T & {
  * that will perform the transformation on a list.
  *
  * The resulting tree will contain a single root node. If multiple root-level
- * nodes (i.e., nodes without a parent) are found, only the first one will be
- * returned.
+ * nodes (i.e., nodes whose parent ID is `null` or `undefined`) are found, only
+ * the first one (in input order) will be returned.
+ *
+ * A "missing parent" is defined as `null`/`undefined` only (not falsy values like `0`).
  *
  * @template I - The name of the property holding the node's unique ID.
  * @template P - The name of the property holding the parent node's ID.
@@ -21,6 +23,7 @@ export type TreeOf<T, C extends string> = T & {
  * @param {S} childProp - The name of the property to create for child nodes (e.g., 'children').
  * @returns {(list: T[]) => TreeOf<T, S>} A function that takes a flat list of nodes
  *   and returns the root node of the constructed tree.
+ * @throws {Error} If no root node is found.
  *
  * @example
  * import { listToTree } from './list-to-tree';
@@ -70,14 +73,42 @@ export const listToTree =
 	>(
 		list: T[]
 	): TreeOf<T, S> =>
-		list
-			.filter(item => !item[parentProp])
-			.map(function buildTree(node: any): any {
+		(() => {
+			const byId = list.reduce((acc, item) => {
+				acc.set(item[idProp], item)
+				return acc
+			}, new Map<ID, T>())
+
+			const rootId = list.find(item => item[parentProp] == null)?.[idProp]
+			if (rootId == null) {
+				throw new Error('listToTree: no root node found')
+			}
+
+			const childIdsByParentId = list.reduce((acc, item) => {
+				const parentId = item[parentProp]
+				if (parentId == null) return acc
+
+				const childId = item[idProp]
+				const children = acc.get(parentId)
+				if (children) children.push(childId)
+				else acc.set(parentId, [childId])
+
+				return acc
+			}, new Map<ID, ID[]>())
+
+			const build = (id: ID): TreeOf<T, S> => {
+				const node = byId.get(id)
+				if (!node) {
+					// The list is malformed (dangling references). Keep this explicit and loud.
+					throw new Error(`listToTree: missing node for id ${String(id)}`)
+				}
+
+				const childIds = childIdsByParentId.get(id) ?? []
 				return {
 					...node,
-					[childProp]: list
-						.filter(child => child[parentProp] === node[idProp])
-						.map(buildTree)
-				}
-			})
-			.shift()
+					[childProp]: childIds.map(build)
+				} as TreeOf<T, S>
+			}
+
+			return build(rootId)
+		})()

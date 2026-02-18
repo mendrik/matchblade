@@ -1,8 +1,12 @@
-
 import { caseOf, match } from './match.ts'
-import { isArray, isFunction, isNotUndefined, isObject, isUndefined } from './utils.ts'
-
-const _ = () => true
+import {
+	_,
+	isArray,
+	isFunction,
+	isNotUndefined,
+	isObject,
+	isUndefined
+} from './utils.ts'
 
 type Recurse<Source, Spec> = Spec extends (source: any) => infer R
 	? R
@@ -55,8 +59,9 @@ export function evolve<O extends object, Sp extends object>(
  *   transformed object, or a curried function.
  *
  * @example
- * import { evolve } from './evolve-alt';
- * import { inc, map } from 'ramda';
+ * import { evolve } from 'matchblade';
+ *
+ * const inc = (n: number) => n + 1;
  *
  * const source = {
  *   a: 1,
@@ -69,7 +74,7 @@ export function evolve<O extends object, Sp extends object>(
  *   a: inc, // Increment `a`
  *   b: {
  *     c: (c: number) => c * 2, // Double `b.c`
- *     d: map(inc) // Increment each item in `b.d`
+ *     d: (arr: number[]) => arr.map(inc) // Increment each item in `b.d`
  *   },
  *   newProp: (o: typeof source) => o.a + o.b.c, // Add a new property
  *   f: {
@@ -96,8 +101,13 @@ export function evolve(specs: any, source?: any): any {
 	if (source === undefined) {
 		return (obj: any) => evolve(specs, obj)
 	} else {
+		const isArrayOfObjects = (
+			value: unknown
+		): value is Array<Record<string, any>> =>
+			isArray(value) && value.every(isObject)
+
 		const fork = match<[any, any], any>(
-			caseOf([isArray, isObject], (prop: any[], spec: object) =>
+			caseOf([isArrayOfObjects, isObject], (prop: any[], spec: object) =>
 				prop.map(evolve(spec))
 			),
 			caseOf([isObject, isObject], (obj: object, spec: object) =>

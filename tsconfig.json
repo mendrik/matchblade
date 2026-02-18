@@ -1,39 +1,34 @@
 {
-  "$schema": "http://json.schemastore.org/tsconfig",
-  "compilerOptions": {
-    // Core ECMAScript features
-    "target": "ES2024",
-    "module": "ESNext",
-    "lib": ["ES2024", "DOM", "DOM.Iterable"],
+	"$schema": "http://json.schemastore.org/tsconfig",
+	"compilerOptions": {
+		// Core ECMAScript features
+		"target": "ES2024",
+		"module": "ESNext",
+		"lib": ["ES2024", "DOM", "DOM.Iterable"],
 
-    // Module resolution
-    "moduleResolution": "bundler",
-    "esModuleInterop": true,
-    "verbatimModuleSyntax": true,
+		// Module resolution
+		"moduleResolution": "bundler",
+		"esModuleInterop": true,
+		"verbatimModuleSyntax": true,
 
-    // Strictness and type checking
-    "strict": true,
-    "skipLibCheck": true,
+		// Strictness and type checking
+		"strict": true,
+		"skipLibCheck": true,
 
-    // Output and build
-    "noEmit": true,
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "./dist",
-    "rootDir": "./lib",
+		// Output and build
+		"noEmit": true,
+		"declaration": true,
+		"declarationMap": true,
+		"sourceMap": true,
+		"outDir": "./dist",
+		"rootDir": "./lib",
 
-    // Other good practices
-    "forceConsistentCasingInFileNames": true,
-    "isolatedModules": true,
-    "useDefineForClassFields": true,
-    "allowImportingTsExtensions": true
-  },
-  "include": ["lib"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.spec.ts"
-  ]
+		// Other good practices
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true,
+		"useDefineForClassFields": true,
+		"allowImportingTsExtensions": true
+	},
+	"include": ["lib"],
+	"exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

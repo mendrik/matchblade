@@ -9,7 +9,7 @@ describe('mapBy', () => {
 			{ id: 1, name: 'Alice' },
 			{ id: 2, name: 'Bob' }
 		]
-		const map = mapBy<Item>(el => el.id)(list)
+		const map = mapBy((el: Item) => el.id)(list)
 		expect(map.get(1)).toEqual({ id: 1, name: 'Alice' })
 		expect(map.get(2)).toEqual({ id: 2, name: 'Bob' })
 	})

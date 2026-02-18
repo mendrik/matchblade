@@ -30,7 +30,7 @@ export const _ = () => true
  * isArray({}); // false
  * isArray("hello"); // false
  */
-export const isArray = Array.isArray.bind(Array)
+export const isArray = Array.isArray as (value: unknown) => value is unknown[]
 
 /**
  * Checks if a value is a plain object.
@@ -58,8 +58,10 @@ export const isObject = (obj: unknown): obj is object =>
  * isPromise(Promise.resolve()); // true
  * isPromise({}); // false
  */
-export const isPromise = (obj: unknown): obj is object =>
-	Object.prototype.toString.call(obj) === '[object Promise]'
+export const isPromise = (obj: unknown): obj is PromiseLike<unknown> =>
+	(obj instanceof Promise ||
+		Object.prototype.toString.call(obj) === '[object Promise]') &&
+	typeof (obj as PromiseLike<unknown>).then === 'function'
 
 /**
  * Checks if a value is a function.
@@ -105,5 +107,5 @@ export const isUndefined = (value: unknown): value is undefined =>
  * isNotUndefined(null); // true
  * isNotUndefined(undefined); // false
  */
-export const isNotUndefined = (value: unknown): value is object =>
+export const isNotUndefined = <T>(value: T): value is Exclude<T, undefined> =>
 	!isUndefined(value)

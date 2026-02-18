@@ -1,4 +1,4 @@
-type AnyFn = (arg: any) => any
+type AnyFn = (...args: any[]) => any
 type Guard<T> = (value: any) => value is T
 type Predicate = (value: any) => boolean
 
@@ -9,21 +9,31 @@ type Matcher<T = any> =
 	| ObjectMatcher<T>
 	| TupleMatcher<T>
 
-type NarrowedArg<P, A> = P extends Guard<infer T>
-	? T
-	: P extends [infer P1, infer P2]
-		? A extends [infer A1, infer A2]
-			? [NarrowedArg<P1, A1>, NarrowedArg<P2, A2>]
-			: never
-		: P extends AnyFn
-			? A
-			: P extends object
-				? A & {
-						[K in keyof P]: K extends keyof A ? NarrowedArg<P[K], A[K]> : never
-					}
-				: Extract<P, A>
+type NarrowedArg<P, A> =
+	P extends Guard<infer T>
+		? T
+		: P extends [infer P1, infer P2]
+			? A extends [infer A1, infer A2]
+				? [NarrowedArg<P1, A1>, NarrowedArg<P2, A2>]
+				: never
+			: P extends AnyFn
+				? A
+				: P extends object
+					? A & {
+							[K in keyof P]: K extends keyof A
+								? NarrowedArg<P[K], A[K]>
+								: never
+						}
+					: Extract<P, A>
 
-type PrimitiveMatcher = string | number | boolean | null | undefined
+type PrimitiveMatcher =
+	| string
+	| number
+	| boolean
+	| bigint
+	| symbol
+	| null
+	| undefined
 
 type ObjectMatcher<T = any> = T extends object
 	? { [P in keyof T]?: T[P] | Matcher<T[P]> }
@@ -89,6 +99,9 @@ const matchValue = <T>(value: T, matcher: Matcher<T>): boolean => {
 	if (isPrimitive(matcher)) {
 		return value === matcher
 	}
+	if (isTuple(matcher) && Array.isArray(value) && !isTuple(value)) {
+		return false
+	}
 	if (isTuple(matcher) && isTuple(value)) {
 		return (
 			matchValue(value[0], matcher[0] as Matcher<T>) &&
@@ -113,7 +126,7 @@ const isFunction = (fn: any): fn is Function => typeof fn === 'function'
 
 /**
  * Checks if a value is a primitive type.
- * Primitives are considered to be strings, numbers, booleans, null, and undefined.
+ * Primitives are JavaScript primitive values (string, number, boolean, bigint, symbol, null, undefined).
  *
  * @param value - The value to check.
  * @returns {boolean} `true` if the value is a primitive, otherwise `false`.
@@ -124,10 +137,8 @@ const isFunction = (fn: any): fn is Function => typeof fn === 'function'
  * isPrimitive({}); // false
  * isPrimitive([]); // false
  */
-export const isPrimitive = (
-	value: any
-): value is Exclude<any, object | Array<any>> =>
-	!['object', 'function'].includes(typeof value)
+export const isPrimitive = (value: any): value is PrimitiveMatcher =>
+	value === null || !['object', 'function'].includes(typeof value)
 
 /**
  * A powerful pattern matching utility for TypeScript.
@@ -147,8 +158,7 @@ export const isPrimitive = (
  * @throws {Error} If no case matches the provided arguments.
  *
  * @example
- * import { match, caseOf } from './match';
- * import { is, _ } from 'ramda';
+ * import { match, caseOf, _ } from 'matchblade';
  *
  * // Define type guards
  * const isString = (x: any): x is string => typeof x === 'string';

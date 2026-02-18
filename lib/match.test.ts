@@ -1,15 +1,32 @@
-import { T as _, equals, gt, is, isEmpty } from 'ramda'
-import {
-	isBoolean,
-	isEven,
-	isNumber,
-	isOdd,
-	isPrimitive,
-	isString
-} from 'ramda-adjunct'
 import { expectNotType, expectType } from 'tsd'
 import { describe, expect, it } from 'vitest'
-import { caseOf, match } from './match.ts'
+import { caseOf, isPrimitive, match } from './match.ts'
+import { _ } from './utils.ts'
+
+const equals =
+	<T>(expected: T) =>
+	(actual: T) =>
+		Object.is(actual, expected)
+
+const gt = (min: number) => (value: number) => min > value
+
+const is =
+	<T extends abstract new (...args: any[]) => any>(Ctor: T) =>
+	(value: unknown): value is InstanceType<T> =>
+		value instanceof Ctor
+
+const isEmpty = (value: unknown): boolean =>
+	Array.isArray(value) ? value.length === 0 : false
+
+const isString = (value: unknown): value is string => typeof value === 'string'
+const isNumber = (value: unknown): value is number =>
+	typeof value === 'number' && !Number.isNaN(value)
+const isBoolean = (value: unknown): value is boolean =>
+	typeof value === 'boolean'
+const isOdd = (value: unknown): value is number =>
+	isNumber(value) && value % 2 === 1
+const isEven = (value: unknown): value is number =>
+	isNumber(value) && value % 2 === 0
 
 describe('pattern', () => {
 	it('should match the correct case', () => {
@@ -93,6 +110,15 @@ describe('pattern', () => {
 		expect(matcher([2, 2])).toBe('no match')
 	})
 
+	it('does not treat tuple patterns as prefix matches', () => {
+		const matcher = match<[[number, number | string]], string>(
+			caseOf([[isOdd, isString]], () => 'match'),
+			caseOf([_], () => 'no match')
+		)
+
+		expect(matcher([1, '2', 3] as any)).toBe('no match')
+	})
+
 	it('should match objects matchers', () => {
 		const matcher = match<[{ a: number | string }], string>(
 			caseOf([{ a: isString }], ({ a: _ }) => 'match'),
@@ -106,10 +132,10 @@ describe('pattern', () => {
 	it('should narrow types', () => {
 		class Animal {}
 		class Cat extends Animal {
-			meow: () => void
+			meow = () => {}
 		}
 		class Dog extends Animal {
-			bark: () => void
+			bark = () => {}
 		}
 
 		const matcher = match<[Animal], string>(
@@ -195,6 +221,8 @@ describe('pattern', () => {
 			expect(isPrimitive(42)).toBe(true)
 			expect(isPrimitive('hello')).toBe(true)
 			expect(isPrimitive(true)).toBe(true)
+			expect(isPrimitive(42n)).toBe(true)
+			expect(isPrimitive(Symbol('s'))).toBe(true)
 			expect(isPrimitive(null)).toBe(true)
 			expect(isPrimitive(undefined)).toBe(true)
 		})

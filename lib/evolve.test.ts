@@ -1,9 +1,10 @@
-import { always, inc, isNil, map, pipe, prop, when } from 'ramda'
 import { expectType } from 'tsd'
 // Import the necessary functions from Vitest
 import { describe, expect, it } from 'vitest'
 import { awaitObj } from './await-obj.ts'
 import { evolve } from './evolve.ts' // Adjust the import path accordingly
+
+const inc = (value: number) => value + 1
 
 describe('evolve', () => {
 	it('should transform existing properties correctly', () => {
@@ -140,7 +141,7 @@ describe('evolve', () => {
 	it('should handle arrays as properties', () => {
 		const obj = { arr: [1, 2, 3] }
 		const transformations = {
-			arr: map((x: number) => `${x * 2}`)
+			arr: (arr: number[]) => arr.map(x => `${x * 2}`)
 		}
 		const result = evolve(transformations, obj)
 		expect(result).toEqual({ arr: ['2', '4', '6'] })
@@ -156,6 +157,13 @@ describe('evolve', () => {
 		expect(result).toEqual({ arr: [{ a: '2' }, { a: '4' }, { a: '6' }] })
 	})
 
+	it('does not auto-map arrays of primitives with object specs', () => {
+		const obj = { arr: [1, 2, 3] }
+		const transformations = { arr: { a: (a: number) => a } } as any
+		const result = evolve(transformations, obj)
+		expect(result).toEqual({ arr: [1, 2, 3] })
+	})
+
 	it('should handle complex nested transformations', () => {
 		const obj = { a: { b: { c: 1 } } }
 		const transformations = {
@@ -165,12 +173,12 @@ describe('evolve', () => {
 		expect(result).toEqual({ a: { b: { c: 2 } } })
 	})
 
-	it('ramda test', () => {
+	it('supports computed properties from the full source object', () => {
 		const obj = { a: 2, d: 0 }
 		const transformations = {
 			a: inc,
-			b: always(3),
-			c: pipe(prop('a'), inc)
+			b: () => 3,
+			c: (o: typeof obj) => inc(o.a)
 		}
 		const result = evolve(transformations, obj)
 		expectType<number>(result.a)
@@ -183,12 +191,13 @@ describe('evolve', () => {
 	it('works in combination with resolve', async () => {
 		const init = () => Promise.resolve(1)
 		const evolver = evolve({
-			lastProjectId: pipe(
-				prop('last_project_id'),
-				when<number, Promise<number>>(isNil, init)
-			)
+			lastProjectId: (o: { last_project_id: number | null }) =>
+				o.last_project_id == null ? init() : o.last_project_id
 		})
-		const loggedInUser = pipe(evolver, awaitObj)
+		const loggedInUser = (user: {
+			last_project_id: number | null
+			name: string
+		}) => awaitObj(evolver(user))
 		const user = { name: 'test', last_project_id: null }
 		const res = await loggedInUser(user)
 		expect(res).toEqual({
